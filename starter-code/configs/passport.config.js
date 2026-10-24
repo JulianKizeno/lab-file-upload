@@ -1,3 +1,10 @@
+
+// Configure a strong deployment secret; development uses an ephemeral secret.
+const sessionSecret = process.env.SESSION_SECRET ||
+    (process.env.NODE_ENV !== 'production' ? require('crypto').randomBytes(32).toString('hex') : null)
+if (!sessionSecret || sessionSecret.length < 32) {
+    throw new Error('SESSION_SECRET must contain at least 32 characters')
+}
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const User = require('../models/User.model');
@@ -21,11 +28,10 @@ passport.use(
     User.findOne({ username })
       .then(doc => {
         user = doc;
-        console.log('user in login: ', user);
         // here we will get either null (if username doesn't exist) or user object
 
         // if we get null
-        if (!user) next(null, false, { message: 'Incorrect username' });
+        if (!user) return next(null, false, { message: 'Incorrect credentials' });
 
         // if we get user object
         return bcrypt.compare(password, user.password);
@@ -60,9 +66,10 @@ passport.use(
 module.exports = app => {
   app.use(
     session({
-      secret: 'tumblrlabdev',
-      resave: true,
-      saveUninitialized: true,
+      secret: sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+        cookie: { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' },
       store: new MongoStore({ mongooseConnection: mongoose.connection })
     })
   );
