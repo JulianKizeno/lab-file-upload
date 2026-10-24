@@ -9,6 +9,7 @@ Repositorio: `JulianKizeno/lab-file-upload`. Rama: `security/review-2026-10-24`.
 - CWE-532: remove password-hash logging and stop after unknown users
 - Update vulnerable dependencies: mongoose ^6.13.12, passport ^0.7.0
 - Remove committed environment values and add a value-free template; rotate any previously exposed credentials/signing secrets (history retained)
+- Remove unused vulnerable CDN JavaScript libraries; retain existing styles and application behavior
 
 ## Auditoría npm después de los cambios
 
