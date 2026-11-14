@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
 
 mongoose
-  .connect('mongodb://localhost/tumblr-lab-dev', {
-    useCreateIndex: true,
+  .connect(process.env.MONGODB_URI || 'mongodb://localhost/tumblr-lab-dev', {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })

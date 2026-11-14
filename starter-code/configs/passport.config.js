@@ -17,22 +17,16 @@ passport.deserializeUser((id, callback) => {
 passport.use(
   'local-login',
   new LocalStrategy((username, password, next) => {
-    let user;
+    if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
+      return next(null, false, { message: 'Invalid credentials' });
+    }
     User.findOne({ username })
-      .then(doc => {
-        user = doc;
-        console.log('user in login: ', user);
-        // here we will get either null (if username doesn't exist) or user object
-
-        // if we get null
-        if (!user) next(null, false, { message: 'Incorrect username' });
-
-        // if we get user object
-        return bcrypt.compare(password, user.password);
-      })
-      .then(isPasswordCorrect => {
-        if (isPasswordCorrect) next(null, user);
-        else next(null, false, { message: 'Incorrect password' });
+      .then(async user => {
+        if (!user) return next(null, false, { message: 'Invalid credentials' });
+        if (!await bcrypt.compare(password, user.password)) {
+          return next(null, false, { message: 'Invalid credentials' });
+        }
+        return next(null, user);
       })
       .catch(error => next(error));
   })
@@ -42,6 +36,9 @@ passport.use(
   'local-signup',
   new LocalStrategy({ passReqToCallback: true }, (req, username, password, next) => {
     const { email } = req.body;
+    if (typeof username !== 'string' || typeof password !== 'string' || typeof email !== 'string' || !username || !password || !email) {
+      return next(null, false, { message: 'Invalid signup fields' });
+    }
 
     bcrypt
       .hash(password, 10)
@@ -58,11 +55,15 @@ passport.use(
 );
 
 module.exports = app => {
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+    throw new Error('SESSION_SECRET must contain at least 32 characters');
+  }
   app.use(
     session({
-      secret: 'tumblrlabdev',
-      resave: true,
-      saveUninitialized: true,
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      cookie: { httpOnly: true, sameSite: 'lax', secure: app.get('env') === 'production' },
       store: new MongoStore({ mongooseConnection: mongoose.connection })
     })
   );
