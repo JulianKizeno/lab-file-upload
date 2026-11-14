@@ -37,8 +37,8 @@ router.get('/profile', ensureLoggedIn('/login'), (req, res) => {
   });
 });
 
-router.post('/logout', ensureLoggedIn('/login'), (req, res) => {
-  req.logout();
+router.post('/logout', ensureLoggedIn('/login'), (req, res, next) => {
+  req.logout(err => { if (err) return next(err); res.redirect('/'); });
   res.redirect('/');
 });
 
